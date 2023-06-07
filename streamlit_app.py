@@ -31,7 +31,6 @@ def main():
     st.title("Production de Biométhane en France")
     st.markdown("---")
 
-
     st.subheader("0. Données")
     with st.expander("Données"):
         tab1, tab2, tab3 = st.tabs(["points-injection.csv", 
@@ -50,16 +49,16 @@ def main():
     st.subheader(" ")
     st.subheader("1. Statistiques")
     col1_, col2_, col3_ = st.columns(3)
-    col1_.metric("Nombre de sites", str(len(df_pts)), "5%")
+    col1_.metric("Nombre de sites", str(len(df_pts)), "15%")
     col2_.metric(
         "Capacité totale (GWh/an)",
-        str(df_pts["Capacite de production (GWh/an)"].sum().round(1)), "8%")
+        str(df_pts["Capacite de production (GWh/an)"].sum().round(1)), "28%")
     col3_.metric("1er site", df_pts["Date de mise en service"].min(), "")
 
 
     # Layout
     st.subheader(" ")
-    col1, col2 = st.columns([2,1])
+    col1, col2 = st.columns([2,1], gap="medium")
     with col1:
         st.subheader("2. Nombre de sites mis en service")
         min_year, max_year = st.select_slider('Sélectionnez une période',
@@ -70,7 +69,8 @@ def main():
         df_pts_annee = df_pts.groupby(by="Annee mise en service").count().reset_index()
 
         df_pts_annee_plot = df_pts_annee[
-            (df_pts_annee["Annee mise en service"] >= int(min_year)) & (df_pts_annee["Annee mise en service"] <= int(max_year)) 
+            (df_pts_annee["Annee mise en service"] >= int(min_year)) & \
+                (df_pts_annee["Annee mise en service"] <= int(max_year)) 
         ].rename(columns={"Nom du site": "Nombre de sites"})
 
         # 1. Line Plot
@@ -138,21 +138,33 @@ def main():
         annee = st.selectbox(
             "Sélectionner une année:",
             (df_pts["Annee mise en service"].sort_values().unique().tolist()),
-            index=10,
-            key=1,
+             index=10,
+             key=1,
         )
 
     # Pepare Data
-    df_pts_plot = df_pts[df_pts["Annee mise en service"] == annee][
+    df_pts_plot_n = df_pts[df_pts["Annee mise en service"] == annee][
         ["Region", "Capacite de production (GWh/an)"]
     ]
+    # df_pts_plot_n_1 = df_pts[df_pts["Annee mise en service"] == (annee-1)][
+    #     ["Region", "Capacite de production (GWh/an)"]
+    # ]
+    # df_pts_plot_n_2 = df_pts[df_pts["Annee mise en service"] == (annee-2)][
+    #     ["Region", "Capacite de production (GWh/an)"]
+    # ]
 
     # 5. Pie Plot
-    fig = make_subplots(rows=1, cols=3, specs=[[{"type": "domain"}, {"type": "domain"}, {"type": "domain"}]])
+    fig = make_subplots(rows=1, 
+                        cols=3, 
+                        specs=[[{"type": "domain"}, {"type": "domain"}, {"type": "domain"}]],
+                        subplot_titles=['Année n-2', 'Année n-1', 'Année n', '2007']
+                        )
+    
     fig.add_trace(
         go.Pie(
-            labels=df_pts_plot["Region"].to_list(),
-            values=df_pts_plot["Capacite de production (GWh/an)"],
+            labels=df_pts_plot_n["Region"].to_list(),
+            values=df_pts_plot_n["Capacite de production (GWh/an)"],
+            #title='Année n-2',
             name="",
         ),
         1,
@@ -160,9 +172,11 @@ def main():
     )
     fig.add_trace(
         go.Pie(
-            labels=df_pts_plot["Region"].to_list(),
-            values=df_pts_plot["Capacite de production (GWh/an)"],
-            name="GHG Emissions",
+            labels=df_pts_plot_n["Region"].to_list(),
+            values=df_pts_plot_n["Capacite de production (GWh/an)"],
+            #title='Année n-1',
+
+            name="",
         ),
         1,
         2,
@@ -170,9 +184,12 @@ def main():
 
     fig.add_trace(
         go.Pie(
-            labels=df_pts_plot["Region"].to_list(),
-            values=df_pts_plot["Capacite de production (GWh/an)"],
-            name="GHG Emissions",
+            labels=df_pts_plot_n["Region"].to_list(),
+            values=df_pts_plot_n["Capacite de production (GWh/an)"],
+            #title='Année n',
+
+            name="",
+
         ),
         1,
         3,
@@ -183,15 +200,8 @@ def main():
         hole=0.7,
         hoverinfo="label+percent+name",
         pull=[0, 0, 0, 0.2, 0, 0, 0, 0, 0, 0, 0, 0],
+             
         textposition="outside",
-    )
-
-    fig.update_layout(
-
-    font=dict(
-        size=14,
-        
-    )
     )
 
     st.plotly_chart(fig, use_container_width=True)
