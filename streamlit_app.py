@@ -25,17 +25,34 @@ def main():
     df_mois = pd.read_csv("production-mensuelle-biomethane.csv", sep=";")
     df_horaire = pd.read_csv("prod-nat-gaz-horaire-prov.csv", sep=";")
 
-    list_years = ['2011', '2012', '2013', '2014', '2015', '2016', 
-                '2017', '2018', '2019', '2020','2021', '2022', '2023']
+    list_years = [
+        "2011",
+        "2012",
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2020",
+        "2021",
+        "2022",
+        "2023",
+    ]
 
     st.title("Production de Biométhane en France")
     st.markdown("---")
 
     st.subheader("0. Données")
     with st.expander("Données"):
-        tab1, tab2, tab3 = st.tabs(["points-injection.csv", 
-                                    "production-mensuelle-biomethane.csv",
-                                    "prod-nat-gaz-horaire-prov.csv"])
+        tab1, tab2, tab3 = st.tabs(
+            [
+                "points-injection.csv",
+                "production-mensuelle-biomethane.csv",
+                "prod-nat-gaz-horaire-prov.csv",
+            ]
+        )
 
     with tab1:
         st.dataframe(df_pts)
@@ -52,25 +69,26 @@ def main():
     col1_.metric("Nombre de sites", str(len(df_pts)), "15%")
     col2_.metric(
         "Capacité totale (GWh/an)",
-        str(df_pts["Capacite de production (GWh/an)"].sum().round(1)), "28%")
+        str(df_pts["Capacite de production (GWh/an)"].sum().round(1)),
+        "28%",
+    )
     col3_.metric("1er site", df_pts["Date de mise en service"].min(), "")
-
 
     # Layout
     st.subheader(" ")
-    col1, col2 = st.columns([2,1], gap="medium")
+    col1, col2 = st.columns([2, 1], gap="medium")
     with col1:
         st.subheader("2. Nombre de sites mis en service")
-        min_year, max_year = st.select_slider('Sélectionnez une période',
-                                       options=list_years,
-                                       value=('2013', '2022'))
-      
+        min_year, max_year = st.select_slider(
+            "Sélectionnez une période", options=list_years, value=("2013", "2022")
+        )
+
         # Prepare data
         df_pts_annee = df_pts.groupby(by="Annee mise en service").count().reset_index()
 
         df_pts_annee_plot = df_pts_annee[
-            (df_pts_annee["Annee mise en service"] >= int(min_year)) & \
-                (df_pts_annee["Annee mise en service"] <= int(max_year)) 
+            (df_pts_annee["Annee mise en service"] >= int(min_year))
+            & (df_pts_annee["Annee mise en service"] <= int(max_year))
         ].rename(columns={"Nom du site": "Nombre de sites"})
 
         # 1. Line Plot
@@ -78,7 +96,7 @@ def main():
             df_pts_annee_plot,
             x="Annee mise en service",
             y="Nombre de sites",
-            title="De " + str(min_year) + " à " + str(max_year)
+            title="De " + str(min_year) + " à " + str(max_year),
         )
 
         # Show
@@ -106,25 +124,29 @@ def main():
             orientation="h",
         )
         st.plotly_chart(fig, use_container_width=True)
-       
+
     st.subheader(" ")
     st.subheader(" ")
     st.subheader("4. Localisation des sites")
 
     # Prepare Data
     years = st.multiselect(
-                        'Sélectionnez une année de mise en service',
-                        list_years,
-                        default='2022'
-                        )
+        "Sélectionnez une année de mise en service", list_years, default="2022"
+    )
     if len(years) >= 1:
-        df_sample = df_pts[df_pts["Annee mise en service"].astype(str).replace(",", "").isin(years)]
+        df_sample = df_pts[
+            df_pts["Annee mise en service"].astype(str).replace(",", "").isin(years)
+        ]
 
-        df_sample[["latitude", "longitude"]] = df_sample["Coordonnees"].str.split(", ", expand=True)
-        df_sample[["latitude", "longitude"]] = df_sample[['latitude','longitude']].astype(float)
+        df_sample[["latitude", "longitude"]] = df_sample["Coordonnees"].str.split(
+            ", ", expand=True
+        )
+        df_sample[["latitude", "longitude"]] = df_sample[
+            ["latitude", "longitude"]
+        ].astype(float)
 
-        #2. Map Plot
-        st.map(df_sample[['latitude','longitude']].dropna(how = 'any'))
+        # 2. Map Plot
+        st.map(df_sample[["latitude", "longitude"]].dropna(how="any"))
 
     else:
         st.write("No results.")
@@ -138,33 +160,34 @@ def main():
         annee = st.selectbox(
             "Sélectionner une année:",
             (df_pts["Annee mise en service"].sort_values().unique().tolist()),
-             index=10,
-             key=1,
+            index=10,
+            key=1,
         )
 
     # Pepare Data
     df_pts_plot_n = df_pts[df_pts["Annee mise en service"] == annee][
         ["Region", "Capacite de production (GWh/an)"]
     ]
-    # df_pts_plot_n_1 = df_pts[df_pts["Annee mise en service"] == (annee-1)][
-    #     ["Region", "Capacite de production (GWh/an)"]
-    # ]
-    # df_pts_plot_n_2 = df_pts[df_pts["Annee mise en service"] == (annee-2)][
-    #     ["Region", "Capacite de production (GWh/an)"]
-    # ]
+    df_pts_plot_n_1 = df_pts[df_pts["Annee mise en service"] == (annee-1)][
+        ["Region", "Capacite de production (GWh/an)"]
+    ]
+    df_pts_plot_n_2 = df_pts[df_pts["Annee mise en service"] == (annee-2)][
+        ["Region", "Capacite de production (GWh/an)"]
+    ]
 
     # 5. Pie Plot
-    fig = make_subplots(rows=1, 
-                        cols=3, 
-                        specs=[[{"type": "domain"}, {"type": "domain"}, {"type": "domain"}]],
-                        subplot_titles=['Année n-2', 'Année n-1', 'Année n', '2007']
-                        )
-    
+    fig = make_subplots(
+        rows=1,
+        cols=3,
+        specs=[[{"type": "domain"}, {"type": "domain"}, {"type": "domain"}]],
+        subplot_titles=["Année n-2", "Année n-1", "Année n", "2007"],
+    )
+
     fig.add_trace(
         go.Pie(
-            labels=df_pts_plot_n["Region"].to_list(),
-            values=df_pts_plot_n["Capacite de production (GWh/an)"],
-            #title='Année n-2',
+            labels=df_pts_plot_n_2["Region"].to_list(),
+            values=df_pts_plot_n_2["Capacite de production (GWh/an)"],
+            # title='Année n-2',
             name="",
         ),
         1,
@@ -172,10 +195,9 @@ def main():
     )
     fig.add_trace(
         go.Pie(
-            labels=df_pts_plot_n["Region"].to_list(),
-            values=df_pts_plot_n["Capacite de production (GWh/an)"],
-            #title='Année n-1',
-
+            labels=df_pts_plot_n_1["Region"].to_list(),
+            values=df_pts_plot_n_1["Capacite de production (GWh/an)"],
+            # title='Année n-1',
             name="",
         ),
         1,
@@ -186,10 +208,8 @@ def main():
         go.Pie(
             labels=df_pts_plot_n["Region"].to_list(),
             values=df_pts_plot_n["Capacite de production (GWh/an)"],
-            #title='Année n',
-
+            # title='Année n',
             name="",
-
         ),
         1,
         3,
@@ -200,21 +220,19 @@ def main():
         hole=0.7,
         hoverinfo="label+percent+name",
         pull=[0, 0, 0, 0.2, 0, 0, 0, 0, 0, 0, 0, 0],
-             
         textposition="outside",
     )
 
     st.plotly_chart(fig, use_container_width=True)
-    
 
-    col1,  = st.columns(1)
+    (col1,) = st.columns(1)
     with col1:
         st.subheader("6. Production nationale horaire")
         # Prepare Data
         df_horaire[["annee", "mois", "jour"]] = df_horaire["Journée gazière"].str.split(
             "-", expand=True
         )
-    
+
         heures_liste = [
             "0" + str(i) + ":00" if i < 10 else str(i) + ":00" for i in range(24)
         ]
@@ -244,6 +262,7 @@ def main():
         # Prepare data
         month_1 = "0" + str(date_1.month) if date_1.month < 10 else str(date_1.month)
         month_2 = "0" + str(date_2.month) if date_2.month < 10 else str(date_2.month)
+
         day_1 = "0" + str(date_1.day) if date_1.day < 10 else str(date_1.day)
         day_2 = "0" + str(date_2.day) if date_2.day < 10 else str(date_2.day)
 
@@ -286,5 +305,6 @@ def main():
         )
         # Show
         st.plotly_chart(fig, use_container_width=True)
-       
+
+
 main()
