@@ -11,7 +11,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
-import streamlit_javascript as st_js
 from folium.plugins import HeatMap
 from streamlit_folium import st_folium
 from plotly.subplots import make_subplots
