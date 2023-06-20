@@ -11,15 +11,18 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
+import streamlit_javascript as st_js
 from folium.plugins import HeatMap
 from streamlit_folium import st_folium
 from plotly.subplots import make_subplots
 
 
 def main():
+
     # Configuring web page
     st.set_page_config(layout="wide")
 
+    
     # Loading datasets
     df_pts = pd.read_csv("points-injection.csv", sep=";")
     df_mois = pd.read_csv("production-mensuelle-biomethane.csv", sep=";")
@@ -41,8 +44,9 @@ def main():
         "2023",
     ]
 
-    st.title("Production de Biométhane en France")
+    st.title("Dashboard de la Production de Biométhane en France")
     st.markdown("---")
+
 
     st.subheader("0. Données")
     with st.expander("Données"):
@@ -80,7 +84,7 @@ def main():
     with col1:
         st.subheader("2. Nombre de sites mis en service")
         min_year, max_year = st.select_slider(
-            "Sélectionnez une période", options=list_years, value=("2013", "2022")
+            "Sélectionnez une période", options=list_years, value=("2013", "2017")
         )
 
         # Prepare data
@@ -105,7 +109,7 @@ def main():
     with col2:
         st.subheader("3. Sites par capacité de production")
         # streamlit component
-        top_value = st.slider("Top", 0, 30, 18)
+        top_value = st.slider("Top", 0, 30, 20)
 
         # Prepare data
         df_pts_bar = (
@@ -127,11 +131,11 @@ def main():
 
     st.subheader(" ")
     st.subheader(" ")
-    st.subheader("4. Localisation des sites")
 
+    st.subheader("4. Localisation des sites")
     # Prepare Data
     years = st.multiselect(
-        "Sélectionnez une année de mise en service", list_years, default="2022"
+        "Sélectionnez une année de mise en service", list_years, default=['2022','2018','2019']
     )
     if len(years) >= 1:
         df_sample = df_pts[
@@ -175,12 +179,14 @@ def main():
         ["Region", "Capacite de production (GWh/an)"]
     ]
 
+
+
     # 5. Pie Plot
     fig = make_subplots(
         rows=1,
         cols=3,
         specs=[[{"type": "domain"}, {"type": "domain"}, {"type": "domain"}]],
-        subplot_titles=["Année n-2", "Année n-1", "Année n", "2007"],
+        subplot_titles=["n-2", "n-1", "n"],
     )
 
     fig.add_trace(
@@ -241,7 +247,7 @@ def main():
         with col1_:
             # streamlit component
             date_1 = st.date_input(
-                "Sélectionnez une date de début:", datetime.date(2022, 1, 1)
+                "Sélectionnez une date de début:", datetime.date(2019, 1, 1)
             )
         with col2_:
             # streamlit component
@@ -251,7 +257,7 @@ def main():
         with col3_:
             # streamlit component
             date_2 = st.date_input(
-                "Sélectionnez une date de fin:", datetime.date(2022, 1, 21)
+                "Sélectionnez une date de fin:", datetime.date(2020, 12, 31)
             )
         with col4_:
             # streamlit component
@@ -260,12 +266,14 @@ def main():
             )
 
         # Prepare data
+        # filter month column
         month_1 = "0" + str(date_1.month) if date_1.month < 10 else str(date_1.month)
         month_2 = "0" + str(date_2.month) if date_2.month < 10 else str(date_2.month)
-
+        # filter day column
         day_1 = "0" + str(date_1.day) if date_1.day < 10 else str(date_1.day)
         day_2 = "0" + str(date_2.day) if date_2.day < 10 else str(date_2.day)
 
+        #
         df_horaire_week = df_horaire.loc[
             (df_horaire["annee"] >= str(date_1.year))
             & (df_horaire["annee"] <= str(date_2.year))
@@ -307,4 +315,5 @@ def main():
         st.plotly_chart(fig, use_container_width=True)
 
 
-main()
+if __name__ == "__main__":
+    main()
